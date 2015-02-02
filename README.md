@@ -1,7 +1,7 @@
 Ionize Forum module
 ===============================================================================
 
-Forum version: 1.0.1
+Forum version: 1.0.2
 
 Forum module will work with Ionize 1.0.0 and above.
 
@@ -23,6 +23,10 @@ IMPORTANT : Before any update, make a backup of your database.
 ===============================================================================
 
 #### Changelog
+
+###### v1.0.2
+
+Fixing URL parse bugs
 
 ###### v1.0.1
 
