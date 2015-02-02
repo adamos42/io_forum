@@ -24,16 +24,10 @@ IMPORTANT : Before any update, make a backup of your database.
 
 #### Changelog
 
-###### v1.0.2
+###### `v1.0.2 ------------------------------------------------------ 2015.02.02`
+* Fixing URL parse bugs
+* Fixing the database.xml (v1.0.1)
+* Creating the module and share with github (v1.0.0)
 
-Fixing URL parse bugs
-
-###### v1.0.1
-
-Fixing the database.xml
-
-###### v1.0.0 
-
-Creating the module and share with github
 
 
