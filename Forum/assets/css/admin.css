@@ -1,0 +1,20 @@
+h2.main.forum {
+    background: url('../images/icon_48_module.png') no-repeat 10px center;
+    background-size: auto 80%; padding: 0 20px 8px 20px; margin: 15px 0 0 0;
+    line-height: 47px;
+}
+
+#maincolumn.forum {
+   padding: 0;
+}
+
+.forum-version {
+   position: relative;
+   right: 10px;
+   top: -13px;
+}
+
+.github-icon {
+   background: url('../images/github_icon.png') no-repeat center center;
+   background-size: cover; width: 48px; height: 48px; display: inline-block;
+}

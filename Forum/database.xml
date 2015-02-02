@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sql>
+    <name>Ionize Forum module database</name>
+    <version>0.2</version>
+    <license>GPLv3</license>
+    
+    <tables>
+        <query>
+            CREATE TABLE IF NOT EXISTS `forums` (
+              `id_forum` int(11) NOT NULL AUTO_INCREMENT,
+              `order` int(11) NOT NULL,
+              `parent` int(11) NOT NULL,
+              `code` varchar(30) NOT NULL,
+              `icon` varchar(100) NOT NULL DEFAULT 'folder',
+              `locked` tinyint(1) NOT NULL DEFAULT '0',
+              `level_read` double NOT NULL,
+              `level_write` double NOT NULL,
+              `level_moderator` double NOT NULL,
+              `level_open` double NOT NULL,
+              `num_topics` int(11) NOT NULL,
+              `num_forums` int(11) NOT NULL DEFAULT '0',
+              `last_date` datetime NOT NULL,
+              `last_user` int(11) NOT NULL DEFAULT '0',
+              `last_topic` int(11) NOT NULL DEFAULT '0',
+              PRIMARY KEY (`id_forum`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forums_lang` (
+              `lang_id` int(11) NOT NULL AUTO_INCREMENT,
+              `id_forum` int(11) NOT NULL,
+              `lang` varchar(100) NOT NULL,
+              `url` varchar(100) NOT NULL,
+              `title` varchar(100) NOT NULL,
+              `description` text NOT NULL,
+              `preview` text NOT NULL,
+              PRIMARY KEY (`lang_id`),
+              KEY `id_forum` (`id_forum`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forum_attachments` (
+              `id_attach` int(11) NOT NULL AUTO_INCREMENT,
+              `id_post` int(11) NOT NULL,
+              `type` varchar(100) NOT NULL,
+              `file` varchar(200) NOT NULL,
+              `description` text NOT NULL,
+              PRIMARY KEY (`id_attach`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forum_posts` (
+              `id_post` int(11) NOT NULL AUTO_INCREMENT,
+              `id_user` int(11) NOT NULL,
+              `id_topic` int(11) NOT NULL,
+              `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `content` text NOT NULL,
+              `edited_by` int(11) NOT NULL,
+              `edited_was` datetime NOT NULL,
+              PRIMARY KEY (`id_post`),
+              KEY `id_topic` (`id_topic`),
+              KEY `id_user` (`id_user`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS module_demo_links (
+                parent CHAR(25) NOT NULL,
+                id_parent INT(11) UNSIGNED NOT NULL,
+                id_author INT UNSIGNED NOT NULL,
+                ordering INT(11) UNSIGNED NULL DEFAULT 9999,
+                PRIMARY KEY (parent,id_parent,id_author)
+            )
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8
+            COLLATE = utf8_unicode_ci;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forum_topics` (
+              `id_topic` int(11) NOT NULL AUTO_INCREMENT,
+              `id_forum` int(11) NOT NULL,
+              `order_level` int(11) NOT NULL,
+              `topic_closed` tinyint(1) NOT NULL DEFAULT '0',
+              `last_date` datetime NOT NULL,
+              `last_user` int(11) NOT NULL,
+              `num_read` int(11) NOT NULL,
+              `num_posts` int(11) NOT NULL,
+              `id_owner` int(11) NOT NULL,
+              UNIQUE KEY `id_topic_3` (`id_topic`),
+              KEY `id_topic` (`id_topic`),
+              KEY `id_topic_2` (`id_topic`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;    
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forum_topics_lang` (
+              `lang_id` int(11) NOT NULL AUTO_INCREMENT,
+              `id_topic` int(11) NOT NULL,
+              `lang` varchar(100) NOT NULL,
+              `url` varchar(100) NOT NULL,
+              `title` varchar(100) NOT NULL,
+              `description` text NOT NULL,
+              PRIMARY KEY (`lang_id`),
+              KEY `id_topic` (`id_topic`),
+              UNIQUE KEY `url` (`url`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+ 
+        <query>
+            CREATE TABLE IF NOT EXISTS `module_forum` (
+              `id_settings` int(11) NOT NULL AUTO_INCREMENT,
+              `order` int(11) NOT NULL,
+              `parent` int(11) NOT NULL,
+              `type` varchar(100) NOT NULL,
+              `name` varchar(200) NOT NULL,
+              `value` text NOT NULL,
+              `default` varchar(100) NOT NULL,
+              `options` text NOT NULL,
+              PRIMARY KEY (`id_settings`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+        </query>
+        
+        <query>
+        	DROP TRIGGER IF EXISTS `forum_posts_after_insert`;
+               DELIMITER $$
+               CREATE TRIGGER `forum_posts_after_insert` AFTER INSERT ON `forum_posts`
+                FOR EACH ROW BEGIN
+
+	               DECLARE $user_id, $topic_id, $forum_id, $num_posts, $num_topics INT;
+	               DECLARE $last_date DATETIME;
+
+	               SELECT id_topic, id_user, `date` FROM forum_posts ORDER BY id_post DESC
+		               LIMIT 0,1 INTO $topic_id, $user_id, $last_date;
+
+	               SELECT id_forum FROM forum_topics WHERE id_topic = $topic_id
+		               INTO $forum_id;
+
+	               SELECT COUNT(*) FROM forum_posts WHERE id_topic = $topic_id
+		               INTO $num_posts;
+
+	               UPDATE forum_topics
+		               SET
+			               last_user = $user_id,
+			               last_date = $last_date,
+			               num_posts = $num_posts
+
+		               WHERE id_topic = $topic_id;
+
+	               SELECT COUNT(*) FROM forum_topics WHERE id_forum = $forum_id
+		               INTO $num_topics;
+
+	               UPDATE forums
+		               SET
+			               last_user = $user_id,
+			               last_date = $last_date,
+			               last_topic = $topic_id,
+			               num_topics = $num_topics
+
+		               WHERE id_forum = $forum_id;
+
+
+               END
+               $$
+               DELIMITER ;
+        </query>
+        
+        <query>
+        	DROP TRIGGER IF EXISTS `forum_topics_after_insert`;
+            DELIMITER $$
+            CREATE TRIGGER `forum_topics_after_insert` AFTER INSERT ON `forum_topics`
+             FOR EACH ROW BEGIN
+
+	            DECLARE $topic_id, $forum_id, $num_topic INT;
+                
+                SELECT id_forum FROM forum_topics ORDER BY id_topic DESC
+		            LIMIT 0,1 INTO $forum_id;
+		            
+		         SELECT COUNT(*) FROM forum_topics WHERE id_forum = $forum_id INTO $num_topic;		         
+
+	            UPDATE forums SET num_topics = $num_topic
+		            WHERE id_forum = $forum_id;
+               
+
+            END
+            $$
+            DELIMITER ; 
+        </query>
+        
+        <query>
+            ALTER TABLE `forums_lang`
+               ADD CONSTRAINT `forum_langs_to_forums` FOREIGN KEY (`id_forum`) REFERENCES `forums` (`id_forum`) ON DELETE CASCADE ON UPDATE CASCADE;
+  
+           ALTER TABLE `forum_posts`
+               ADD CONSTRAINT `post_to_topics` FOREIGN KEY (`id_topic`) REFERENCES `forum_topics` (`id_topic`) ON DELETE CASCADE ON UPDATE CASCADE;
+  
+           ALTER TABLE `forum_topics_lang`
+               ADD CONSTRAINT `forum_topic_id` FOREIGN KEY (`id_topic`) REFERENCES `forum_topics` (`id_topic`) ON DELETE CASCADE ON UPDATE CASCADE;
+        </query>
+ 
+    </tables>
+</sql>
