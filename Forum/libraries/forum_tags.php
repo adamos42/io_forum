@@ -48,7 +48,7 @@ class Forum_Tags extends TagManager {
         $sep = $tag->getAttribute('separator');
         $data = $tag->get($tag->getParentName());
 
-        $url = str_replace($data['path'], "", self::$ci->uri->uri_string());
+        $url = str_replace($data['absolute_url'], "", self::$ci->uri->uri_string());
 
         $segments = explode('/', $url);
 
