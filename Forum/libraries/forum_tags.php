@@ -48,8 +48,7 @@ class Forum_Tags extends TagManager {
         $sep = $tag->getAttribute('separator');
         $data = $tag->get($tag->getParentName());
 
-        $url = str_replace($data['absolute_url'], "", self::$ci->uri->uri_string());
-
+        $url = str_replace($data['absolute_url'], "", self::$ci->uri->uri_string());        
         $segments = explode('/', $url);
 
         //return '<pre>'.print_r($segments, true).'</pre>';
@@ -62,7 +61,7 @@ class Forum_Tags extends TagManager {
 
         self::load_model('forum_model');
 
-        $str = '<a href="/' . $data['path'] . '"> Fórum kezdőoldal </a> ';
+        $str = '<a href="/' . $data['path'] . '"> '.lang('forum_home').' </a> ';
 
         if (count($segments) >= 2) {
             $forum = self::$ci->forum_model->get_forum(array('url' => $segments[1]))->row();
@@ -206,7 +205,9 @@ class Forum_Tags extends TagManager {
 
         $str = "";
 
-        $segments = explode('/', self::$ci->uri->uri_string());
+		$current_page = Tagmanager_Page::get_current_page();		
+		$url = str_replace($current_page['absolute_url'], "", self::$ci->uri->uri_string());        
+        $segments = explode('/', $url);
 
         if (isset($segments[1]) && !isset($segments[2])) {
 
