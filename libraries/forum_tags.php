@@ -280,6 +280,7 @@ class Forum_Tags extends TagManager
     					$_topic['url'] = $forum_url.'/'.$topic->url;
     					$_topic['link'] = $forum_url.'/'.$topic->url;
     					$_topic['title'] = $topic->title;
+    					$_topic['description'] = $topic->description;
     					$_topic['posts'] = $topic->posts;
     					$_topic['last_posted'] = $topic->last_posted;
     					$_topic['topic'] = (array) $topic;
@@ -349,7 +350,7 @@ class Forum_Tags extends TagManager
     	self::$ci =& get_instance(); self::$ci->load->model('forum_model');
     	
     	// If cached then return cached return value
-    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return $str;
+    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return (self::$topic != '' ? $str : '');
     	
     	// Get ion:tag variables
     	$class = $tag->getAttribute('class');
@@ -398,10 +399,29 @@ class Forum_Tags extends TagManager
     				$_post = array();
     				
     				$_post['id'] = $post->id_post;
+    				$_post['posted'] = $post->posted;
     				
+    				$_poster = array();
     				
+	    				$_poster['id'] = $post->id_user;
+	    				$_poster['username'] = $post->user_username;
+	    				$_poster['screen_name'] = $post->user_screen_name;
+	    				$_poster['last_visit'] = $post->user_lastvisit;
+	    				$_poster['registered'] = $post->user_joindate;
+	    				$_poster['firstname'] = $post->user_firstname;
+	    				$_poster['lastname'] = $post->user_lastname;
+	    				$_poster['email'] = $post->user_email;
+	    				$_poster['role_level'] = $post->user_role_level;
+	    				$_poster['role_name'] = $post->user_role_name;
+	    				$_poster['role_code'] = $post->user_role_code;
+	    				$_poster['role_description'] = $post->user_role_description;
+	    				
+	    				$_poster['avatar'] = "";
+	    				$_poster['post_count'] = $post->user_post_count;
     				
+    				$_post['poster'] = $_poster;
     				
+    				$_post['content'] = $post->post;
     				
     				$posts_array[] = $_post;
     			}
@@ -436,7 +456,7 @@ class Forum_Tags extends TagManager
     	}
     	else
     	{
-    		return '<div class="alert-box alert">'.lang('404_topic_not_found').'</div>';
+    		return (self::$topic != '' ? '<div class="alert-box alert">'.lang('404_topic_not_found').'</div>' : '');
     	}
     	
     	/* ----------------------------------------------------------------- */
@@ -446,7 +466,7 @@ class Forum_Tags extends TagManager
     	// Wrap outside the ion:tag and set the cache
     	$output = self::wrap($tag, $str); self::set_cache($tag, $output);
     	 
-    	return $output; // return the tag if is forum view
+    	return (self::$topic != '' ? $output : ''); // return the tag if is forum view
     }
     
     /* ------------------------------------------------------------------------------------------------------------- */

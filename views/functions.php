@@ -34,5 +34,17 @@ var Forum = new (function()
 	position: relative; top: -3px;
 }
 
+.forum.posts {
+	margin-top: 30px;
+}
+
+.forum.posts td {
+	padding: 3px 8px;
+}
+
+.forum.posts .post.info {
+	background: #eee;
+}
+
 </style>
 

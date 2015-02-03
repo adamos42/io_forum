@@ -18,13 +18,16 @@
 				<th align="center" width="32">&nbsp;</th>
 				<th><ion:lang key="topic_title" /></th>
 				<th align="center" width="128"><ion:lang key="topic_posts" /></th>
-				<th align="center" width="32"><ion:lang key="topic_last_post" /></th>
+				<th align="center" width="48"><ion:lang key="topic_last_post" /></th>
 			</thead>
 			<tbody>
 				<ion:topics>
 					<tr>
 						<td align="center">&nbsp;</td>
-						<td><a href="<ion:link  />"> <ion:title /> </a></td>
+						<td>
+							<div class="topic title"><a href="<ion:link  />"> <ion:title /> </a></div>
+							<ion:description tag="div" class="topic description" />
+						</td>
 						<td align="center"><ion:posts /></td>
 						<td align="center"><ion:last_posted /></td>
 					</tr>
@@ -51,29 +54,28 @@
 			<ion:post_reply />
 		</h4>
 		
+		<ion:description tag="div" class="topic description" />
+				
 		<table class="forum posts" width="100%" border="0" cellpadding="0" cellspacing="2">
 		<ion:posts>
-			<ion:post>
+			<ion:posts>
 			<tr id="post<ion:id/>" class="post">
-				<td class="post info">			
-					<ion:id tag="div" class="id" pattern="#{id}" />
-									
+				<td class="post info" width="180">			
+					<div class="post id"> #<ion:id /> </div>
+							
 					<ion:poster tag="div" class="poster">
-						<ion:screen_name tag="span" class="name" />				
-						<ion:role_name tag="span" class="role" />
-						<ion:avatar tag="span" class="avatar" />
+						<div class="poster screen_name"></div> <ion:screen_name /> </div>
+						<div class="poster role_name"></div> <ion:role_name /> </div>
 						
-						<ion:registered tag="span" class="registered" label="registered" />
-						<ion:post_count tag="span" class="post_count" label="forum_posts" />
+						<div class="poster registered"></div> <ion:registered /> </div>
+						<div class="poster post_count"></div> <ion:post_count /> </div>
 					</ion:poster>
-					
-					<ion:posted tag="div" class="posted" />
 					
 				</td>
 				<td class="post content">			
-					<ion:posted tag="div" class="posted" format="Y.m.d H:i" />
+					<div class="post posted"> <ion:posted format="Y.m.d H:i" /> </div>
 					
-					<ion:content tag="div" class="content" />
+					<div class="post content"> <ion:content class="content" /> </div>
 					
 					<ion:edited tag="div" class="edited">
 						<ion:editor tag="span" class="editor" label="forum_editor" />
@@ -81,7 +83,7 @@
 					</ion:edited>
 				</td>
 			</tr>
-			</ion:post>
+			</ion:posts>
 		</ion:posts>
 		</table>
 		
