@@ -1,10 +1,101 @@
 <?php
 
-class Forum_model extends CI_Model {
-   
-   public function __construct() {
-      parent::__construct();
-   }
+class Forum_model extends CI_Model
+{
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
+	/**
+	 * @var string Current language code
+	 */
+	private $lang = 'en';
+	
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
+	private $filter_lang = array('forum','forum_topic');
+	
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
+   	public function __construct()
+   	{
+    	parent::__construct(); // Construct parent class
+    	
+    	// Get the language code from the Settings
+    	$this->lang = Settings::get_lang();
+   	}
+   	
+   	/* ------------------------------------------------------------------------------------------------------------- */
+   	
+   	public function where($name, $value, $formatting=TRUE)
+   	{
+   		$this->db->where($name, $value, $formatting);
+   		return $this;
+   	}
+   	
+   	/* ------------------------------------------------------------------------------------------------------------- */
+   	
+   	public function get($table="module_forum")
+   	{
+   		// Filter language if possible
+   		if(in_array($table, $this->filter_lang)) $this->db->where('lang', $this->lang);
+   		
+   		// Run the database query
+   		$query = $this->db->from($table)->get();
+   		
+   		//echo "<pre>".$this->db->last_query()."</pre>";
+   		
+   		// Return database object
+   		return $query;
+   	}
+   	
+   	/* ------------------------------------------------------------------------------------------------------------- */
+   	
+   	public function get_forums()
+   	{
+   		return $this->get('forum');
+   	}
+   	
+   	/* ------------------------------------------------------------------------------------------------------------- */
+   	
+   	public function get_topics($id_forum=NULL)
+   	{
+   		if($id_forum != NULL) $this->db->where('id_forum', $id_forum);
+   		return $this->get('forum_topic');
+   	}
+   	
+   	/* ------------------------------------------------------------------------------------------------------------- */
+   	
+   	public function get_posts($id_topic=NULL)
+   	{
+   		if($id_topic != NULL) $this->db->where('id_topic', $id_topic);
+   		return $this->get('forum_post');
+   	}
+   	
+   	/* ------------------------------------------------------------------------------------------------------------- */
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
+   	
    
    /**
     * Fórum lista

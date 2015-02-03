@@ -64,9 +64,89 @@
               KEY `id_topic` (`id_topic`),
               KEY `id_user` (`id_user`)
             ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS module_demo_links (
+                parent CHAR(25) NOT NULL,
+                id_parent INT(11) UNSIGNED NOT NULL,
+                id_author INT UNSIGNED NOT NULL,
+                ordering INT(11) UNSIGNED NULL DEFAULT 9999,
+                PRIMARY KEY (parent,id_parent,id_author)
+            )
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8
+            COLLATE = utf8_unicode_ci;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forum_topics` (
+              `id_topic` int(11) NOT NULL AUTO_INCREMENT,
+              `id_forum` int(11) NOT NULL,
+              `order_level` int(11) NOT NULL,
+              `topic_closed` tinyint(1) NOT NULL DEFAULT '0',
+              `last_date` datetime NOT NULL,
+              `last_user` int(11) NOT NULL,
+              `num_read` int(11) NOT NULL,
+              `num_posts` int(11) NOT NULL,
+              `id_owner` int(11) NOT NULL,
+              UNIQUE KEY `id_topic_3` (`id_topic`),
+              KEY `id_topic` (`id_topic`),
+              KEY `id_topic_2` (`id_topic`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+        
+        <query>
+            CREATE TABLE IF NOT EXISTS `forum_topics_lang` (
+              `lang_id` int(11) NOT NULL AUTO_INCREMENT,
+              `id_topic` int(11) NOT NULL,
+              `lang` varchar(100) NOT NULL,
+              `url` varchar(100) NOT NULL,
+              `title` varchar(100) NOT NULL,
+              `description` text NOT NULL,
+              PRIMARY KEY (`lang_id`),
+              KEY `id_topic` (`id_topic`),
+              UNIQUE KEY `url` (`url`)
+            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+        </query>
+ 
+        <query>
+            CREATE TABLE IF NOT EXISTS `module_forum` (
+              `id_settings` int(11) NOT NULL AUTO_INCREMENT,
+              `order` int(11) NOT NULL,
+              `parent` int(11) NOT NULL,
+              `type` varchar(100) NOT NULL,
+              `name` varchar(200) NOT NULL,
+              `value` text NOT NULL,
+              `default` varchar(100) NOT NULL,
+              `options` text NOT NULL,
+              PRIMARY KEY (`id_settings`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+        </query>
+        
+        <query>
+            DROP TRIGGER IF EXISTS `forum_topics_after_insert`;
+            DELIMITER $$
+            CREATE TRIGGER `forum_topics_after_insert` AFTER INSERT ON `forum_topics`
+             FOR EACH ROW BEGIN
+
+	            DECLARE $topic_id, $forum_id, $num_topic INT;
+                
+                SELECT id_forum FROM forum_topics ORDER BY id_topic DESC
+		            LIMIT 0,1 INTO $forum_id;
+		            
+		         SELECT COUNT(*) FROM forum_topics WHERE id_forum = $forum_id INTO $num_topic;		         
+
+	            UPDATE forums SET num_topics = $num_topic
+		            WHERE id_forum = $forum_id;
+               
+
+            END
+            $$
+            DELIMITER ;     
             
             DROP TRIGGER IF EXISTS `forum_posts_after_insert`;
-               DELIMITER //
+               DELIMITER $$
                CREATE TRIGGER `forum_posts_after_insert` AFTER INSERT ON `forum_posts`
                 FOR EACH ROW BEGIN
 
@@ -104,86 +184,8 @@
 
 
                END
-               //
-               DELIMITER ;
-        </query>
-        
-        <query>
-            CREATE TABLE IF NOT EXISTS module_demo_links (
-                parent CHAR(25) NOT NULL,
-                id_parent INT(11) UNSIGNED NOT NULL,
-                id_author INT UNSIGNED NOT NULL,
-                ordering INT(11) UNSIGNED NULL DEFAULT 9999,
-                PRIMARY KEY (parent,id_parent,id_author)
-            )
-            ENGINE = InnoDB
-            DEFAULT CHARACTER SET = utf8
-            COLLATE = utf8_unicode_ci;
-        </query>
-        
-        <query>
-            CREATE TABLE IF NOT EXISTS `forum_topics` (
-              `id_topic` int(11) NOT NULL AUTO_INCREMENT,
-              `id_forum` int(11) NOT NULL,
-              `order_level` int(11) NOT NULL,
-              `topic_closed` tinyint(1) NOT NULL DEFAULT '0',
-              `last_date` datetime NOT NULL,
-              `last_user` int(11) NOT NULL,
-              `num_read` int(11) NOT NULL,
-              `num_posts` int(11) NOT NULL,
-              `id_owner` int(11) NOT NULL,
-              UNIQUE KEY `id_topic_3` (`id_topic`),
-              KEY `id_topic` (`id_topic`),
-              KEY `id_topic_2` (`id_topic`)
-            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
-            
-            DROP TRIGGER IF EXISTS `forum_topics_after_insert`;
-            DELIMITER //
-            CREATE TRIGGER `forum_topics_after_insert` AFTER INSERT ON `forum_topics`
-             FOR EACH ROW BEGIN
-
-	            DECLARE $topic_id, $forum_id, $num_topic INT;
-                
-                SELECT id_forum FROM forum_topics ORDER BY id_topic DESC
-		            LIMIT 0,1 INTO $forum_id;
-		            
-		         SELECT COUNT(*) FROM forum_topics WHERE id_forum = $forum_id INTO $num_topic;		         
-
-	            UPDATE forums SET num_topics = $num_topic
-		            WHERE id_forum = $forum_id;
-               
-
-            END
-            //
-            DELIMITER ;            
-        </query>
-        
-        <query>
-            CREATE TABLE IF NOT EXISTS `forum_topics_lang` (
-              `lang_id` int(11) NOT NULL AUTO_INCREMENT,
-              `id_topic` int(11) NOT NULL,
-              `lang` varchar(100) NOT NULL,
-              `url` varchar(100) NOT NULL,
-              `title` varchar(100) NOT NULL,
-              `description` text NOT NULL,
-              PRIMARY KEY (`lang_id`),
-              KEY `id_topic` (`id_topic`),
-              UNIQUE KEY `url` (`url`)
-            ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
-        </query>
- 
-        <query>
-            CREATE TABLE IF NOT EXISTS `module_forum` (
-              `id_settings` int(11) NOT NULL AUTO_INCREMENT,
-              `order` int(11) NOT NULL,
-              `parent` int(11) NOT NULL,
-              `type` varchar(100) NOT NULL,
-              `name` varchar(200) NOT NULL,
-              `value` text NOT NULL,
-              `default` varchar(100) NOT NULL,
-              `options` text NOT NULL,
-              PRIMARY KEY (`id_settings`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+               $$
+               DELIMITER ;            
         </query>
         
         <query>

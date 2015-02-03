@@ -1,7 +1,39 @@
 <?php
 
-class Forum_Tags extends TagManager {
+//require_once APPPATH.'libraries/Tagmanager/Page.php';
 
+class Forum_Tags extends TagManager
+{
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
+	/**
+	 * @var array URL segments
+	 */
+	public static $segments = array();
+	
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
+	/**
+	 * @var string Forum url segment
+	 */
+	public static $forum = "";
+	
+	/**
+	 * @var string Topic url segment
+	 */
+	public static $topic = "";
+	
+	/**
+	 * @var string Post url segment
+	 */
+	public static $post = "";
+	
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
+	public static $ci = null;
+	
+	/* ------------------------------------------------------------------------------------------------------------- */
+	
     /**
      * Tags declaration
      * To be available, each tag must be declared in this static array.
@@ -9,386 +41,422 @@ class Forum_Tags extends TagManager {
      * @var array
      *
      */
-    public static $tag_definitions = array(
-        "forum" => "index",
-        "forum_breadcrumb" => "tag_breadcrumb", // Navigator breadcrumb
-        "forum:main" => "tag_main", // Main screen tag
-        "forum:main:forums" => "tag_forums", // Main screen forum list
-        "forum:main:admin" => "tag_admin",
-        "forum:admin" => "tag_admin",
-        "forum:admin:main" => "tag_main",
-        "forum:admin:main:forums" => "tag_forums",
-        "forum:forum" => "tag_forum", // Forum screen tag
-        "forum:forum:topics" => "tag_topics", // Forum screen topics list
-        "forum:forum:can_open" => "tag_forum_can_open", // Can open topic permission
-        "forum:topic" => "tag_topic", // Topic screen tag
-        "forum:topic:posts" => "tag_posts", // Topic screen posts list
-        "forum:topic:bbcode_script" => "bbcode_script", // BBcode script...        
-        "forum:last_posts" => "tag_last_posts", // Lattest posts list
-        "forum:last_topics" => "tag_last_topics", // Lattest updated topics list
-        "forum:top_topics" => "tag_top_topics", // Top topicst list
-        "forum:top_forums" => "tag_top_forums", // Top forums list
-        "forum:top_users" => "tag_top_users"             // Forum top users list
+    public static $tag_definitions = array
+    (
+        	"forum"									=>	"index",    	
+    		"forum:toolbar"							=>	"tag_toolbar",
+    		"forum:breadcrumb"						=>	"tag_breadcrumb",
+    		
+    		"forum:forums"							=>	"tag_forum",
+    		"forum:forums:contents"					=>	"tag_forum_contents",
+    		"forum:forums:empty"					=>	"tag_forum_empty",
+    		
+    		"forum:topic"							=>	"tag_topic",
+    		"forum:topic:empty"						=>	"tag_topic_empty",
     );
-
-    public static function index(FTL_Binding $tag) {
-        $str = $tag->expand();
-        return $str;
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function initialize()
+    {    	
+    	self::$ci =& get_instance();
+    	
+    	// Get the current forum url and get the forum/topic url segments
+    	$url = self::$ci->uri->uri_string(); $current_page = TagManager_Page::get_current_page();
+    	$url = str_replace("/{$current_page['url']}",'', $url);
+    	
+    	// Saving the url segments and unset the empty segment
+    	self::$segments = explode('/', $url); if(self::$segments[0] == "") unset(self::$segments[0]);
+    	
+    	if(isset(self::$segments[1])) self::$forum = self::$segments[1];
+    	if(isset(self::$segments[2])) self::$topic = self::$segments[2];
     }
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
 
-    public function bbcode_script(FTL_Binding $tag) {
-
-        return '<script type="text/javascript" src="/modules/Forum/assets/js/bbcode.js"></script>';
+    public static function index(FTL_Binding $tag)
+    {	
+    	$cache = $tag->getAttribute('cache', TRUE);
+    	self::initialize();
+    	
+    	// If cached then return cached return value
+    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return $str;
+    	
+    	// Get ion:tag variables
+    	$id = $tag->getAttribute('id'); $class = $tag->getAttribute('class');
+    	$attr = $tag->getAttribute('attr'); $parent = $tag->getAttribute('tag');
+    	
+    	$str = ""; // Create the output
+    	
+    	if($attr != "") $attr = " $attr"; // Adding custom attribute to tag 
+    	if($id != "") $id = ' id="'.$id.'"'; // Adding id to the tag
+    	if($class != "") $class = ' class="'.$class.'"'; // Adding classes
+    	if($parent != "") $str .= "<{$parent}{$id}{$class}{$attr}>"; // Adding parent tag
+    	
+    	/* ----------------------------------------------------------------- */
+    	
+    	$current_page = TagManager_Page::get_current_page();
+    	$base_url = $current_page['absolute_url'];
+    	
+    	$tag->set('version', 'v2.0.0');
+    	$tag->set('name', 'forum');
+    	$tag->set('url', $base_url);
+    	
+    	$str .= $tag->expand(); // Expand the ion:tag
+    	
+    	/* ----------------------------------------------------------------- */
+    	
+    	if($parent != "") $str .= "</{$parent}>"; // Closing parent tag
+    	// Set the cached return value
+    	self::set_cache($tag, $str);    	
+        return $str; // and return 	
     }
-
-    public function tag_breadcrumb(FTL_Binding $tag) {
-
-        self::$ci->load->helper('colorcode');
-
-        $sep = $tag->getAttribute('separator');
-        $data = $tag->get($tag->getParentName());
-
-        $url = str_replace($data['path'], "", self::$ci->uri->uri_string());
-
-        $segments = explode('/', $url);
-
-        //return '<pre>'.print_r($segments, true).'</pre>';
-        //return count($segments);
-
-        if ($sep == "")
-            $sep = " &raquo; ";
-
-        $forum = $topic = $str = "";
-
-        self::load_model('forum_model');
-
-        $str = '<a href="/' . $data['path'] . '"> Fórum kezdőoldal </a> ';
-
-        if (count($segments) >= 2) {
-            $forum = self::$ci->forum_model->get_forum(array('url' => $segments[1]))->row();
-            $str .= $sep . ' <a href="/' . $data['path'] . '/' . $forum->url . '"> ' . colorize($forum->title) . ' </a> ';
-        }
-
-        if (count($segments) >= 3) {
-            $topic = self::$ci->forum_model->get_topic(array('url' => $segments[2]))->row();
-            $str .= $sep . ' <a href="/' . $data['path'] . '/' . $forum->url . '/' . $topic->url . '"> ' . colorize($topic->title) . ' </a> ';
-        }
-
-        return $str;
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function tag_toolbar(FTL_Binding $tag)
+    {
+    	$cache = $tag->getAttribute('cache', TRUE);
+    	self::$ci =& get_instance();
+    	 
+    	// If cached then return cached return value
+    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return $str;
+    	 
+    	// Get ion:tag variables
+    	$id = $tag->getAttribute('id'); $class = $tag->getAttribute('class');
+    	$attr = $tag->getAttribute('attr'); $parent = $tag->getAttribute('tag');
+    	$buttons_class = $tag->getAttribute('buttons_class');
+    	 
+    	$str = ""; // Create the output
+    	 
+    	if($attr != "") $attr = " $attr"; // Adding custom attribute to tag
+    	if($id != "") $id = ' id="'.$id.'"'; // Adding id to the tag
+    	if($class != "") $class = ' class="'.$class.'"'; // Adding classes
+    	if($parent != "") $str .= "<{$parent}{$id}{$class}{$attr}>"; // Adding parent tag
+    	 
+    	// Get the logged user role
+    	$user_role = User()->get_role();
+    	 
+    	/* --------------------------------------------------------------------------------------------------------- */
+    	
+    	// @todo: permission check
+    	if($user_role['role_level'] >= 5000)
+    	{
+	    	$buttons_classes = ' class="forum create '.$buttons_class.'"';
+	    	$str .= '<button '.$buttons_classes.' onclick="Forum.create(\'forum\')">'.lang("create_forum").'</button>';
+    	}
+    	
+    	// @todo: permission check
+    	if($user_role['role_level'] >= 5000)
+    	{
+	    	$buttons_classes = ' class="topic create '.$buttons_class.'"';
+	    	$str .= '<button '.$buttons_classes.' onclick="Forum.create(\'topic\')">'.lang("create_topic").'</button>';
+    	}
+    	
+    	// @todo: permission check
+    	if($user_role['role_level'] >= 5000)
+    	{
+	    	$buttons_classes = ' class="post create '.$buttons_class.'"';
+	    	$str .= '<button '.$buttons_classes.' onclick="Forum.create(\'post\')">'.lang("create_post").'</button>';
+    	}
+    	
+    	$str .= $tag->expand(); // Expand the ion:tag
+    	
+    	/* --------------------------------------------------------------------------------------------------------- */    	
+    	
+    	// Assign the forum forms
+    	$assing_variables = array
+    	(
+    			'forum_form' => self::$ci->load->view('form_forum', null, true),
+    			'topic_form' => self::$ci->load->view('form_topic', null, true),
+    			'post_form' => self::$ci->load->view('form_post', null, true)
+    	);
+    	
+    	// Append the forum functions script file
+    	$str .= self::$ci->load->view('functions', $assing_variables, true);
+    	
+    	/* --------------------------------------------------------------------------------------------------------- */
+    	
+    	if($parent != "") $str .= "</{$parent}>"; // Closing parent tag
+    	// Set the cached return value
+    	self::set_cache($tag, $str);
+    	return $str; // and return
     }
-
-    public function tag_admin(FTL_Binding $tag) {
-
-        $user = (object) User()->get_user();
-
-        $user_level = 20;
-
-        if (count((array) $user) > 0)
-            $user_level = $user->role_level;
-        
-        if($user_level >= 5000) {
-            
-            return $tag->expand();
-            
-        } else {
-            
-            return '';
-            
-        }
-        
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function tag_breadcrumb(FTL_Binding $tag)
+    {
+    	$cache = $tag->getAttribute('cache', TRUE);
+    	
+    	// If cached then return cached return value
+    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return $str;
+    	
+    	// Get ion:tag variables
+    	$id = $tag->getAttribute('id'); $class = $tag->getAttribute('class');
+    	$attr = $tag->getAttribute('attr'); $parent = $tag->getAttribute('tag');
+    	
+    	$str = ""; // Create the output
+    	
+    	if($attr != "") $attr = " $attr"; // Adding custom attribute to tag
+    	if($id != "") $id = ' id="'.$id.'"'; // Adding id to the tag
+    	if($class != "") $class = ' class="'.$class.'"'; // Adding classes
+    	if($parent != "") $str .= "<{$parent}{$id}{$class}{$attr}>"; // Adding parent tag
+    	
+    	/* ----------------------------------------------------------------- */
+    	
+    	// @todo tag
+    	
+    	/* ----------------------------------------------------------------- */
+    	
+    	if($parent != "") $str .= "</{$parent}>"; // Closing parent tag
+    	// Set the cached return value
+    	self::set_cache($tag, $str);
+    	return $str; // and return
     }
-
-    public function tag_main(FTL_Binding $tag) {
-
-        $str = "";
-
-        $segments = explode('/', self::$ci->uri->uri_string());
-
-        if (!isset($segments[1])) {
-
-            self::load_model('forum_model');
-
-            $forums = self::$ci->forum_model->get_forum(array('parent' => 0))->result();
-
-            if (is_array($forums)) {
-
-                foreach ($forums as $forum) {
-
-                    $tag->set('forum_id', $forum->id_forum);
-                    $tag->set('id', $forum->id_forum);
-                    $tag->set('title', $forum->title);
-                    $tag->set('description', $forum->description);
-                    //$tag->set('num_forums', 0); 
-
-                    $tag->set('num_forums', self::$ci->forum_model->get_forum(array('parent' => $forum->id_forum))->num_rows());
-                    $tag->set('num_topics', self::$ci->forum_model->get_topic(array('id_forum' => $forum->id_forum))->num_rows());
-
-                    $tag->set('forums', $tag->expand());
-
-                    $str .= $tag->expand();
-                }
-
-                return $str;
-            }
-        } else {
-
-            return $str;
-        }
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function tag_forum(FTL_Binding $tag)
+    {
+    	$cache = $tag->getAttribute('cache', TRUE);
+    	// Load the codeigniter class and load the forum model
+    	self::$ci =& get_instance(); self::$ci->load->model('forum_model');
+    	 
+    	// If cached then return cached return value
+    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return (self::$topic=="" ? $str : '');
+    	 
+    	// Get ion:tag variables
+    	$class = $tag->getAttribute('class');
+    	$attr = $tag->getAttribute('attr');
+    	$parent = $tag->getAttribute('tag');
+    	if($parent == "") $parent = "div";
+    	
+    	// Get the parent url
+    	$current_page = TagManager_Page::get_current_page();
+    	$base_url = $current_page['absolute_url'];
+    	 
+    	$str = ""; // Create the output
+    	 
+    	if($attr != "") $attr = " $attr"; // Adding custom attribute to tag
+    	if($class != "") $class = ' class="'.$class.'"'; // Adding classes
+    	$str .= "<{$parent} id=\"forum-ajax-container\"{$class}{$attr}>"; // Adding parent tag
+    	 
+    	/* ----------------------------------------------------------------- */
+    	
+    	// Get forums from the database    	
+    	if(self::$forum != "") self::$ci->forum_model->where('url', self::$forum);    	
+    	$forums = self::$ci->forum_model->get_forums();
+    	
+    	// If has forum to itelarate
+    	if($forums != FALSE && $forums->num_rows() > 0)
+    	{
+    		foreach($forums->result() as $row)
+    		{
+    			$tag->set('id', $row->id_forum);
+    			$tag->set('name', $row->code);
+    			
+    			$forum_url = $base_url.'/'.$row->url;
+    			$tag->set('url', $forum_url);
+    			$tag->set('link', $forum_url);
+    			
+    			$tag->set('title', $row->title);
+    			$tag->set('subtitle', $row->preview);
+    			$tag->set('description', $row->description);    			
+    			$tag->set('forum', (array) $row);
+    			
+    			// Get topics from the database
+    			$topics = self::$ci->forum_model->get_topics($row->id_forum);
+    			$topics_array = array();
+    			
+    			// If has topics to itelarate
+    			if($topics != FALSE && $topics->num_rows() > 0)
+    			{
+    				foreach($topics->result() as $topic)
+    				{
+    					$_topic = array();
+    					
+    					$_topic['id'] = $topic->id_topic;
+    					$_topic['url'] = $forum_url.'/'.$topic->url;
+    					$_topic['link'] = $forum_url.'/'.$topic->url;
+    					$_topic['title'] = $topic->title;
+    					$_topic['posts'] = $topic->posts;
+    					$_topic['last_posted'] = $topic->last_posted;
+    					$_topic['topic'] = (array) $topic;
+    			
+    					$topics_array[] = $_topic;
+    				}
+    			}    			
+    			$tag->set('topics', $topics_array);
+    			
+    			// Get the logged user role
+    			$user_role = User()->get_role();
+    			    			
+    			// Edit forum button @todo permission check
+    			if($user_role['role_level'] >= $row->level_moderator || $user_role['role_level'] >= 5000)
+    			{
+    				$edit_forum_button  = '<button class="forum edit button tiny secondary"';
+    				$edit_forum_button .= ' onclick="'."Forum.edit('forum', '{$row->id_forum}');".'">';
+    				$edit_forum_button .= lang('edit_forum');
+    				$edit_forum_button .= '</button>';
+    			}
+    			
+    			// Open topic button @todo permission check
+    			if($user_role['role_level'] >= $row->level_open || $user_role['role_level'] >= 5000)
+    			{
+    				$open_topic_button  = '<button class="topic open button tiny secondary"';
+    				$open_topic_button .= ' onclick="'."Forum.create('topic', '{$row->id_forum}');".'">';
+    				$open_topic_button .= lang('open_topic');
+    				$open_topic_button .= '</button>';
+    			}
+    			
+    			$tag->set('edit_forum', (isset($edit_forum_button)?$edit_forum_button:''));
+    			$tag->set('open_topic', (isset($open_topic_button)?$open_topic_button:''));
+    			
+    			$str .= $tag->expand(); // Expand the ion:tag
+    		}
+    	}
+    	else
+    	{
+    		return '<div class="alert-box alert">'.lang('404_forum_not_found').'</div>';
+    	}
+    	
+    	/* ----------------------------------------------------------------- */
+    	
+    	$str .= "</{$parent}>"; // Closing parent tag
+    	
+    	// Wrap outside the ion:tag and set the cache
+    	$output = self::wrap($tag, $str); self::set_cache($tag, $output);
+    	
+    	return (self::$topic=="" ? $output : ''); // return the tag if is forum view
     }
-
-    public function tag_forums(FTL_Binding $tag) {
-
-        $str = "";
-        self::load_model('forum_model');
-
-        $parent = $tag->get('id');
-
-        $forums = self::$ci->forum_model->get_forum(array('parent' => $parent))->result();
-
-        if (is_array($forums)) {
-
-            //echo "<pre>".print_r($forums, true)."</pre>";
-
-            self::$ci->load->helper('text');
-            self::$ci->load->helper('colorcode');
-
-            foreach ($forums as $forum) {
-                
-                $tag->set('forum_id', $forum->id_forum);
-
-                $tag->set('title', colorize($forum->title));
-                $tag->set('link', $forum->url);
-
-                $tag->set('description', colorize($forum->description));
-
-                $tag->set('preview', colorize($forum->preview));
-
-                $tag->set('icon', '/modules/Forum/assets/icons/32x32/' . $forum->icon . '.png');
-
-                //$tag->set('num_forums', self::$ci->forum_model->get_forum(array('parent' => $parent))->num_rows());
-                //$tag->set('num_topics', self::$ci->forum_model->get_topic(array('id_forum' => $parent))->num_rows());
-
-                $tag->set('num_forums', $forum->num_forums);
-                $tag->set('num_topics', $forum->num_topics);
-
-                if ($forum->last_user != 0) {
-
-                    $user = self::$ci->forum_model->get_user(array('id_user' => $forum->last_user))->row();
-                    $tag->set('last_username', $user->username);
-                } else {
-
-                    $tag->set('last_username', 'anonymous');
-                }
-
-                if ($forum->last_topic != 0) {
-
-                    $topic = self::$ci->forum_model->get_topic(array('tp.id_topic' => $forum->last_topic))->row();
-
-                    $tag->set('last_topic', character_limiter($topic->title, 12));
-                    $tag->set('last_topic_url', $topic->url);
-                } else {
-
-                    $tag->set('last_topic', '');
-                    $tag->set('last_topic_url', '');
-                }
-
-                $tag->set('last_date', $forum->last_date);
-                $tag->set('last_time', $forum->last_time);
-
-                $str .= $tag->expand();
-            }
-
-            return $str;
-        }
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function tag_forum_empty(FTL_Binding $tag)
+    {
+    	$topics = $tag->get('topics'); // Get parent topics array    	
+    	if(count($topics) == 0) return $tag->expand();    	
+    	return '';
     }
-
-    public function tag_forum(FTL_Binding $tag) {
-
-        $str = "";
-
-        $segments = explode('/', self::$ci->uri->uri_string());
-
-        if (isset($segments[1]) && !isset($segments[2])) {
-
-            $url = $segments[1];
-
-            self::load_model('forum_model');
-
-            $forums = self::$ci->forum_model->get_forum(array('url' => $url))->result();
-
-            if (is_array($forums)) {
-
-                self::$ci->load->helper('colorcode');
-
-                foreach ($forums as $forum) {
-
-                    $tag->set('forum_id', $forum->id_forum);
-                    $tag->set('link', $forum->url);
-                    $tag->set('title', colorize($forum->title));
-                    $tag->set('description', colorize($forum->description));
-                    $tag->set('num_topics', $forum->num_topics);
-
-
-                    $tag->set('topics', $tag->expand());
-
-                    $str .= $tag->expand();
-                }
-
-                return $str;
-            } else {
-
-                return "forum not found in database";
-            }
-        } else {
-
-            return $str;
-        }
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function tag_topic(FTL_Binding $tag)
+    {
+    	$cache = $tag->getAttribute('cache', TRUE);
+    	// Load the codeigniter class and load the forum model
+    	self::$ci =& get_instance(); self::$ci->load->model('forum_model');
+    	
+    	// If cached then return cached return value
+    	if ($cache == TRUE && ($str = self::get_cache($tag)) !== FALSE) return $str;
+    	
+    	// Get ion:tag variables
+    	$class = $tag->getAttribute('class');
+    	$attr = $tag->getAttribute('attr');
+    	$parent = $tag->getAttribute('tag');
+    	if($parent == "") $parent = "div";
+    	 
+    	// Get the parent url
+    	$current_page = TagManager_Page::get_current_page();
+    	$base_url = $current_page['absolute_url'];
+    	
+    	$str = ""; // Create the output
+    	
+    	if($attr != "") $attr = " $attr"; // Adding custom attribute to tag
+    	if($class != "") $class = ' class="'.$class.'"'; // Adding classes
+    	$str .= "<{$parent} id=\"forum-ajax-container\"{$class}{$attr}>"; // Adding parent tag
+    	
+    	/* ----------------------------------------------------------------- */
+    	 
+    			 // Get forum from the database
+    			 self::$ci->forum_model->where('url', self::$forum);
+    	$forum = self::$ci->forum_model->get_forums();
+    	
+    			 // Get the topic from the database
+    		     self::$ci->forum_model->where('url', self::$topic);
+    	$topic = self::$ci->forum_model->get_topics();
+    	 
+    	
+    	if($topic != FALSE && $topic->num_rows() > 0)
+    	{
+    		$row = $topic->row();
+    		$tag->set('id', $row->id_topic);
+    		$tag->set('url', $base_url.'/'.$row->forum_url.'/'.$row->url);
+    		$tag->set('title', $row->title);
+    		$tag->set('description', $row->description);
+    		$tag->set('topic', (array) $row);
+    		
+    		// Get the posts from the database
+    		$posts = self::$ci->forum_model->get_posts($row->id_topic);    		
+    		$posts_array = array();
+    		
+    		if($posts != FALSE && $posts->num_rows() > 0)
+    		{
+    			foreach($posts->result() as $post)
+    			{
+    				$_post = array();
+    				
+    				$_post['id'] = $post->id_post;
+    				
+    				
+    				
+    				
+    				
+    				$posts_array[] = $_post;
+    			}
+    		}
+    		$tag->set('posts', $posts_array);
+    		
+    		// Get the logged user role
+    		$user = User()->get_user();
+    		
+    		// Edit topic button @todo permission check
+    		if($user['id_user'] == $row->id_owner || $user['role_level'] >= 5000)
+    		{
+    			$edit_topic_button  = '<button class="topic edit button tiny secondary"';
+    			$edit_topic_button .= ' onclick="'."Forum.edit('topic', '{$row->id_topic}');".'">';
+    			$edit_topic_button .= lang('edit_topic');
+    			$edit_topic_button .= '</button>';
+    		}
+    		 
+    		// Post reply button @todo permission check
+    		if($user['role_level'] >= $row->level_write || $user['role_level'] >= 5000)
+    		{
+    			$post_reply_button  = '<button class="reply post button tiny secondary"';
+    			$post_reply_button .= ' onclick="'."Forum.create('post', '{$row->id_topic}');".'">';
+    			$post_reply_button .= lang('post_reply');
+    			$post_reply_button .= '</button>';
+    		}
+    		 
+    		$tag->set('edit_topic', (isset($edit_topic_button)?$edit_topic_button:''));
+    		$tag->set('post_reply', (isset($post_reply_button)?$post_reply_button:''));
+    		
+    		$str .= $tag->expand(); // Expand the ion:tag
+    	}
+    	else
+    	{
+    		return '<div class="alert-box alert">'.lang('404_topic_not_found').'</div>';
+    	}
+    	
+    	/* ----------------------------------------------------------------- */
+    	 
+    	$str .= "</{$parent}>"; // Closing parent tag
+    	 
+    	// Wrap outside the ion:tag and set the cache
+    	$output = self::wrap($tag, $str); self::set_cache($tag, $output);
+    	 
+    	return $output; // return the tag if is forum view
     }
-
-    public function tag_forum_can_open(FTL_Binding $tag) {
-
-        $str = "";
-
-        $forum_id = $tag->get('forum_id');
-
-        if (is_numeric($forum_id)) {
-
-            self::load_model('forum_model');
-
-            $user = (object) User()->get_user();
-
-            $user_level = 20;
-
-            if (count((array) $user) > 0)
-                $user_level = $user->role_level;
-
-            $forum = self::$ci->forum_model->get_forum(array('fp.id_forum' => $forum_id))->row();
-
-            if ($user_level >= $forum->level_open) {
-                $str = $tag->expand();
-            }
-        }
-
-        return $str;
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    public static function tag_topic_empty(FTL_Binding $tag)
+    {
+    	$posts = $tag->get('posts'); // Get parent posts array    	 
+    	if(count($posts) == 0) return $tag->expand();
+    	return '';
     }
-
-    public function tag_topics(FTL_Binding $tag) {
-
-        $str = "";
-
-        self::load_model('forum_model');
-
-        $lang = Settings::get_lang();
-
-        $forum = $tag->get('forum_id');
-
-        $topics_list = self::$ci->forum_model->get_topic(array('id_forum' => $forum))->result();
-
-        //$str = "<pre>";
-        //$str .= "id_forum => $forum \n";
-        //$str .= "lang => $lang \n";
-        //$str .= "topics_list => ".print_r($topics_list, TRUE);
-        //$str .= "</pre>";
-        //return $str;
-
-        $link = $tag->get('link');
-
-        self::$ci->load->helper('colorcode');
-
-        foreach ($topics_list as $topic) {
-
-            $user = self::$ci->forum_model->get_user(array('id_user' => $topic->last_user))->row();
-
-            $tag->set('topic_id', $topic->id_topic);
-            $tag->set('title', colorize($topic->title));
-            $tag->set('link', $link . "/" . $topic->url);
-            $tag->set('icon', '/modules/Forum/assets/icons/32x32/comment_box.png');
-            $tag->set('num_posts', $topic->num_posts);
-            $tag->set('last_date', $topic->last_date);
-            $tag->set('last_time', $topic->last_time);
-            $tag->set('last_username', $user->username);
-
-            $str .= $tag->expand();
-        }
-
-        return $str;
-    }
-
-    public function tag_topic(FTL_Binding $tag) {
-
-        $str = "";
-        $segments = explode('/', self::$ci->uri->uri_string());
-
-        if (isset($segments[1]) && isset($segments[2])) {
-
-            self::load_model('forum_model');
-
-            self::$ci->load->helper('colorcode');
-
-            $topic = self::$ci->forum_model->get_topic(array('url' => $segments[2]))->row();
-
-            $tag->set('topic_id', $topic->id_topic);
-            $tag->set('title', colorize($topic->title));
-            $tag->set('num_posts', $topic->num_posts);
-            $tag->set('posts', $tag->expand());
-
-            $str .= $tag->expand();
-        }
-
-        return $str;
-    }
-
-    public function tag_posts(FTL_Binding $tag) {
-
-        $str = "";
-        self::load_model('forum_model');
-
-        $topic_id = $tag->get('topic_id');
-
-        $posts = self::$ci->forum_model->get_post(array('id_topic' => $topic_id))->result();
-
-        $posts_num = self::$ci->forum_model->get_post(array('id_topic' => $topic_id))->num_rows();
-
-        $number = $posts_num;
-
-        foreach ($posts as $post) {
-
-            $user = self::$ci->forum_model->get_user(array('id_user' => $post->id_user))->row();
-
-            $online = (object) User()->get_user();
-
-            self::$ci->load->helper('smiley');
-            self::$ci->load->helper('bbcode');
-
-            $tag->set('id', $post->id_post);
-            $tag->set('user_id', $post->id_user);
-            $tag->set('post_date', $post->time);
-            $tag->set('username', $user->username);
-            $tag->set('content', parse_bbcode(parse_smileys($post->content, "/".Theme::get_theme_path()."/images/smileys/")));
-            $tag->set('number', $number--);
-
-            $count = self::$ci->forum_model->get_post(array('id_user' => $post->id_user))->num_rows();
-
-            $tag->set("user_posts", $count);
-
-            if (count((array) $online) > 0) {
-
-                if ($online->id_user == $post->id_user) {
-
-                    $tag->set('permission', 'true');
-                } else {
-
-                    $tag->set('permission', 'false');
-                }
-            } else {
-
-                $tag->set('permission', 'false');
-            }
-
-            $str .= $tag->expand();
-        }
-
-        return $str;
-    }
-
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
 }
