@@ -11,7 +11,7 @@ $config['module']['forum'] = array
     // 'uri' should be the module's folder in lowercase.
     // From 1.0.3, it is not mandatory to set 'uri'.
     
-    'uri' => 'ajax_forum',
+    'uri' => 'io_forum',
     'has_admin'=> TRUE,
     'has_frontend'=> TRUE,
 );

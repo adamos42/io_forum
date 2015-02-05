@@ -1,4 +1,4 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php defined('BASEPATH') or exit('No direct script access allowed');
  
 $route['default_controller'] = "forum";
 $route['(.*)'] = "forum/$1";

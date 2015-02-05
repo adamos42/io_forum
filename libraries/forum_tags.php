@@ -50,6 +50,7 @@ class Forum_Tags extends TagManager
     		"forum:forums"							=>	"tag_forum",
     		"forum:forums:contents"					=>	"tag_forum_contents",
     		"forum:forums:empty"					=>	"tag_forum_empty",
+    		"forum:forums:topics:last_posted"		=>	"tag_simple_date",
     		
     		"forum:topic"							=>	"tag_topic",
     		"forum:topic:empty"						=>	"tag_topic_empty",
@@ -262,7 +263,7 @@ class Forum_Tags extends TagManager
     			
     			$tag->set('title', $row->title);
     			$tag->set('subtitle', $row->preview);
-    			$tag->set('description', $row->description);    			
+    			$tag->set('description', $row->description);
     			$tag->set('forum', (array) $row);
     			
     			// Get topics from the database
@@ -274,8 +275,7 @@ class Forum_Tags extends TagManager
     			{
     				foreach($topics->result() as $topic)
     				{
-    					$_topic = array();
-    					
+    					$_topic = array();    					
     					$_topic['id'] = $topic->id_topic;
     					$_topic['url'] = $forum_url.'/'.$topic->url;
     					$_topic['link'] = $forum_url.'/'.$topic->url;
@@ -283,6 +283,17 @@ class Forum_Tags extends TagManager
     					$_topic['description'] = $topic->description;
     					$_topic['posts'] = $topic->posts;
     					$_topic['last_posted'] = $topic->last_posted;
+    					
+	    					$_last_poster = array();
+	    					$_last_poster['last_visit'] = $topic->last_poster_lastvisit;
+	    					$_last_poster['screen_name'] = $topic->last_poster_screen_name;
+	    					$_last_poster['join_date'] = $topic->last_poster_joindate;
+	    					$_last_poster['username'] = $topic->last_poster_username;
+	    					$_last_poster['firstname'] = $topic->last_poster_firstname;
+	    					$_last_poster['lastname'] = $topic->last_poster_lastname;
+	    					$_last_poster['email'] = $topic->last_poster_email;    	
+	    									
+    					$_topic['last_poster'] = $_last_poster;
     					$_topic['topic'] = (array) $topic;
     			
     					$topics_array[] = $_topic;

@@ -58,7 +58,7 @@ class Forum_model extends CI_Model
    	
    	public function get_topics($id_forum=NULL)
    	{
-   		if($id_forum != NULL) $this->db->where('id_forum', $id_forum);
+   		if($id_forum != NULL) $this->db->where('id_forum', $id_forum);   		
    		return $this->get('forum_topic');
    	}
    	

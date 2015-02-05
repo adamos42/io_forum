@@ -18,7 +18,8 @@
 				<th align="center" width="32">&nbsp;</th>
 				<th><ion:lang key="topic_title" /></th>
 				<th align="center" width="128"><ion:lang key="topic_posts" /></th>
-				<th align="center" width="48"><ion:lang key="topic_last_post" /></th>
+				<th align="center" width="48"><ion:lang key="topic_last_poster" /></th>
+				<th align="center" width="48"><ion:lang key="topic_last_posted" /></th>				
 			</thead>
 			<tbody>
 				<ion:topics>
@@ -28,14 +29,15 @@
 							<div class="topic title"><a href="<ion:link  />"> <ion:title /> </a></div>
 							<ion:description tag="div" class="topic description" />
 						</td>
-						<td align="center"><ion:posts /></td>
-						<td align="center"><ion:last_posted /></td>
+						<td align="center"><ion:posts /></td>						
+						<td align="center"><ion:last_poster:screen_name /></td>
+						<td align="center"><ion:last_posted format="Y.m.d H:i" /></td>
 					</tr>
 				</ion:topics>
 
 				<ion:empty>
 					<tr>
-						<td colspan="4" align="center">
+						<td colspan="5" align="center">
 							<div style="padding: 30px 120px;">
 								<ion:lang key="no_topics_in_this_forum" tag="div" class="alert-box" />
 							</div>
