@@ -10,27 +10,30 @@ class Forum extends My_Controller
 	/* ------------------------------------------------------------------------------------------------------------- */
 	
 	/**
-	 * @var $request JSON request array
+	 * @var $request array JSON request array
 	 */
 	private $request = array();
 	
 	/**
-	 * @var $params JSON request params array
+	 * @var $params array JSON request params array
 	 */
 	private $params = array();
 	
 	/**
-	 * @var $response JSON response array
+	 * @var $response array JSON response array
 	 */
 	private $response = array();	
 	
 	/* ------------------------------------------------------------------------------------------------------------- */
 	
 	/**
-	 * @var $default The default JSON response pattern
+	 * @var $default array The default JSON response pattern
 	 */
-	private $default = array('success' => FALSE, 'result' => array(), 'errors' => array(), 'message' => "");
-	
+	private $default = array('success' => FALSE, 'result' => array(), 'error' => array(), 'message' => "");
+
+	/**
+	 * @var $filter_request array The request method filter
+	 */
 	private $filter_request = array('success', 'result', 'request', 'response', 'message');
 	
 	/* ------------------------------------------------------------------------------------------------------------- */
@@ -46,61 +49,91 @@ class Forum extends My_Controller
     
     /* ------------------------------------------------------------------------------------------------------------- */
  
-    function index( $request =NULL )
-    {
+    public function index( $method =NULL )
+    {    	
     	// If invalid request then response that and exit the code
-    	if($request == NULL && !in_array($request, $this->filter_request) && !method_exists($this, $request))
+    	if($method == NULL && !in_array($method, $this->filter_request) && !method_exists($this, $request))
     	{
     		header('HTTP/1.1 400 Bad Request', true, 400);
     		exit('INVALID REQUEST');
     	}
-    	else if(method_exists($this, $request) && !in_array($request, $this->filter_request))
+    	else if(method_exists($this, $method) && !in_array($method, $this->filter_request))
     	{
-    		$this->request($request);
-    		$this->$request();
+    		$this->request($method);
+    		$this->$method();
     	}
     }
     
+    /* ------------------------------------------------------------------------------------------------------------- */    
+    /* ------------------------------------------------------------------------------------------------------------- */
     /* ------------------------------------------------------------------------------------------------------------- */
     
-    /* ------------------------------------------------------------------------------------------------------------- */
-    
-    /* ------------------------------------------------------------------------------------------------------------- */
-    
-    /* ------------------------------------------------------------------------------------------------------------- */
-    
-    function request( $method )
+    public function forum_create()
     {
+    	
+    	
+    	$this->response();
+    }
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    private function request( $method )
+    {
+    	// Saving the method name
+    	$this->request['method'] = $method;
+    	
+    	// Creating the response array
+    	$this->response = $this->default;
     	 
+    	// Gettint the request beginning time
+    	if(isset($_SERVER['REQUEST_TIME_FLOAT'])) $this->request['timestamp'] = $_SERVER['REQUEST_TIME_FLOAT'];
+    	else $this->request['timestamp'] = $_SERVER['REQUEST_TIME'];
     }
     
     /* ------------------------------------------------------------------------------------------------------------- */
     
-    function success( $success =TRUE )
+    private function success( $success =TRUE )
     {
-    	$this->resonse['success'] = $success;
+    	$this->response['success'] = $success;
     	return $this;
     }
     
     /* ------------------------------------------------------------------------------------------------------------- */
     
-    function result( $data =array() )
+    private function result( $data =array() )
     {
-    	
+    	$this->response['result'] = $data;
+    	return $this;
     }
     
     /* ------------------------------------------------------------------------------------------------------------- */
     
-    function message( $message ="" )
+    private function error( $message ="" )
     {
-    	 
+    	$this->response['error'][] = $message;
+    	$this->response['success'] = FALSE;
+    	return $this;
     }
     
     /* ------------------------------------------------------------------------------------------------------------- */
     
-    function response( $success =NULL, $results =array(), $message="" )
+    private function message( $message ="" )
     {
+    	$this->response['message'] = $message;
+    	return $this;
+    }
+    
+    /* ------------------------------------------------------------------------------------------------------------- */
+    
+    private function response( $success =NULL, $results =array(), $message="" )
+    {
+    	$this->response['timestamp'] = microtime(TRUE);
+    	$this->response['ellapsed_time'] = $this->response['timestamp']-$this->request['timestamp'];
     	
+    	header('Content-Type: application/json');
+    	echo json_encode($this->response);
     }
     
     /* ------------------------------------------------------------------------------------------------------------- */

@@ -1,7 +1,6 @@
 <ion:forum tag="section" id="forum" class="forum-container">
 
 	<ion:toolbar class="forum-toolbar right" tag="div" buttons_class="tiny" />	
-	<div class="clearfix"></div>
 	
 	<ion:breadcrumb class="forum-breadcrumb" tag="div" home="true" home_icon="home" separator="/" topic="true" />
 

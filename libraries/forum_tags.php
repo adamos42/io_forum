@@ -163,8 +163,13 @@ class Forum_Tags extends TagManager
     	
     	$str .= $tag->expand(); // Expand the ion:tag
     	
-    	/* --------------------------------------------------------------------------------------------------------- */    	
+    	/* --------------------------------------------------------------------------------------------------------- */
     	
+    	if($parent != "") $str .= "</{$parent}>"; // Closing parent tag
+    	if($parent != "") $str .= '<div class="clearfix"></div>';
+    	
+    	/* --------------------------------------------------------------------------------------------------------- */
+    	 
     	// Assign the forum forms
     	$assing_variables = array
     	(
@@ -172,13 +177,10 @@ class Forum_Tags extends TagManager
     			'topic_form' => self::$ci->load->view('form_topic', null, true),
     			'post_form' => self::$ci->load->view('form_post', null, true)
     	);
-    	
+    	 
     	// Append the forum functions script file
     	$str .= self::$ci->load->view('functions', $assing_variables, true);
     	
-    	/* --------------------------------------------------------------------------------------------------------- */
-    	
-    	if($parent != "") $str .= "</{$parent}>"; // Closing parent tag
     	// Set the cached return value
     	self::set_cache($tag, $str);
     	return $str; // and return
@@ -303,6 +305,15 @@ class Forum_Tags extends TagManager
     			
     			// Get the logged user role
     			$user_role = User()->get_role();
+    			
+    			// @todo: permission check
+    			if($user_role['role_level'] >= 5000)
+    			{    				
+    				$add_forum_button  = '<button class="forum create button tiny secondary"';
+    				$add_forum_button .= ' onclick="'."Forum.create('forum', '{$row->id_forum}');".'">';
+    				$add_forum_button .= lang('add_subforum');
+    				$add_forum_button .= '</button>';
+    			}
     			    			
     			// Edit forum button @todo permission check
     			if($user_role['role_level'] >= $row->level_moderator || $user_role['role_level'] >= 5000)
@@ -322,6 +333,7 @@ class Forum_Tags extends TagManager
     				$open_topic_button .= '</button>';
     			}
     			
+    			$tag->set('add_forum', (isset($add_forum_button)?$add_forum_button:''));
     			$tag->set('edit_forum', (isset($edit_forum_button)?$edit_forum_button:''));
     			$tag->set('open_topic', (isset($open_topic_button)?$open_topic_button:''));
     			
