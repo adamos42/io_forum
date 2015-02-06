@@ -7,7 +7,7 @@ Forum module will work with Ionize 1.0.0 and above.
 
 ### Author
 
-* [Adam Liszkai](http://liszkaiadam.hu)
+* [Adam Liszkai](http://liszkaiadam.hu) `<contact@liszkaiadam.hu>`
 
 ### Installation
 
@@ -19,7 +19,9 @@ IMPORTANT : Before any update, make a backup of your database.
 4. Create a page which will be your forum page
 5. Set the forum view and check the 'used by module' option on the page options.
 6. Manage the forum from the frontend.
+7. Buy me a coffee! :)
 
+##### You Liked this module? [Send a Donation](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=contact%40liszkaiadam%2ehu&lc=US&item_name=Adam%20Liszkai%20webdeveloper&item_number=io_forum&no_note=0&currency_code=USD&bn=PP%2dDonationsBF%3apaypal%2ddonate%2epng%3aNonHostedGuest) with `PayPal `
 ===============================================================================
 
 #### Changelog
